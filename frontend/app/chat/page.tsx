@@ -22,7 +22,16 @@ function ChatPageContent() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const hasSentInitialMessageRef = useRef(false);
+
+  // Load session ID from localStorage on mount
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem('chat_session_id');
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+    }
+  }, []);
 
   // Send initial message if provided from landing page
   useEffect(() => {
@@ -31,6 +40,39 @@ function ChatPageContent() {
       handleSendMessage(initialMessage);
     }
   }, [initialMessage]);
+
+  // Start new chat function
+  const handleStartNewChat = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/session/new', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create new session');
+      }
+
+      const data = await response.json();
+      const newSessionId = data.session_id;
+
+      // Update session ID
+      setSessionId(newSessionId);
+      localStorage.setItem('chat_session_id', newSessionId);
+
+      // Clear messages
+      setMessages([]);
+
+      // Reset initial message flag
+      hasSentInitialMessageRef.current = false;
+
+    } catch (error) {
+      console.error('Error creating new session:', error);
+      toast.error("เกิดข้อผิดพลาดในการสร้างแชทใหม่ กรุณาลองใหม่อีกครั้ง", {
+        position: "top-center",
+        richColors: true,
+      });
+    }
+  };
 
   const handleSendMessage = async (message: string) => {
     const userMessage: Message = {
@@ -63,6 +105,7 @@ function ChatPageContent() {
         },
         body: JSON.stringify({
           query: message,
+          session_id: sessionId, // Send current session ID if exists
         }),
       });
 
@@ -72,6 +115,12 @@ function ChatPageContent() {
 
       const backendData = await response.json();
       const medicalResponse = backendData.response || "ไม่สามารถรับข้อมูลได้ในขณะนี้";
+
+      // Update session ID from response
+      if (backendData.session_id) {
+        setSessionId(backendData.session_id);
+        localStorage.setItem('chat_session_id', backendData.session_id);
+      }
 
       // Simulate streaming effect
       const words = medicalResponse.split(" ");
@@ -135,7 +184,10 @@ function ChatPageContent() {
 
   return (
     <div className="flex flex-col justify-center w-full h-dvh stretch bg-background">
-      <Header />
+      <Header
+        onNewChat={handleStartNewChat}
+        showNewChat={true}
+      />
       <ChatMessages
         messages={messages}
         isLoading={isLoading}

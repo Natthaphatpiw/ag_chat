@@ -1,9 +1,11 @@
+import { sessions, generateSessionId } from '@/lib/session';
+
 export const maxDuration = 90;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { message, query } = body;
+    const { message, query, session_id } = body;
 
     if (!message && !query) {
       return Response.json(
@@ -13,6 +15,31 @@ export async function POST(req: Request) {
     }
 
     const userMessage = message || query;
+
+    // Handle session management
+    let currentSessionId = session_id;
+    if (!currentSessionId) {
+      // Create new session if not provided
+      currentSessionId = generateSessionId();
+      sessions.set(currentSessionId, {
+        created: new Date(),
+        messages: []
+      });
+    } else if (!sessions.has(currentSessionId)) {
+      // Recreate session if it doesn't exist
+      sessions.set(currentSessionId, {
+        created: new Date(),
+        messages: []
+      });
+    }
+
+    // Add user message to session
+    const session = sessions.get(currentSessionId);
+    session.messages.push({
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    });
 
     // Call the medical API with timeout
     const controller = new AbortController();
@@ -26,6 +53,7 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           query: userMessage,
+          session_id: currentSessionId, // Send session_id to external API if it supports
           top_k: 3
         }),
         signal: controller.signal,
@@ -46,12 +74,21 @@ export async function POST(req: Request) {
       const medicalData = await medicalApiResponse.json();
       console.log("Medical API response:", medicalData);
 
-      // Extract only the response field
+      // Extract response
       const response = medicalData.response || "ไม่สามารถรับข้อมูลได้ในขณะนี้";
 
-      // Return only the response text
+      // Add assistant message to session
+      session.messages.push({
+        role: 'assistant',
+        content: response,
+        timestamp: new Date()
+      });
+
+      // Return response with session_id
       return Response.json({
         response: response,
+        session_id: currentSessionId,
+        sources: medicalData.sources || []
       });
     } catch (fetchError) {
       clearTimeout(timeoutId);
@@ -60,10 +97,10 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error("Error in chat API:", error);
-    const errorMessage = error instanceof Error && error.name === 'AbortError' 
+    const errorMessage = error instanceof Error && error.name === 'AbortError'
       ? "AI server ใช้เวลาตอบนานเกินไป กรุณาลองใหม่อีกครั้ง"
       : "เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ กรุณาลองใหม่อีกครั้ง";
-    
+
     return Response.json(
       {
         error: "Internal server error",

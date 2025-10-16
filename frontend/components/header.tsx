@@ -1,8 +1,17 @@
-export const Header = () => {
+"use client";
+
+import Link from "next/link";
+
+interface HeaderProps {
+  onNewChat?: () => void;
+  showNewChat?: boolean;
+}
+
+export const Header = ({ onNewChat, showNewChat = false }: HeaderProps) => {
   return (
     <div className="fixed right-0 left-0 w-full top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-border z-50">
       <div className="flex justify-between items-center p-4 max-w-5xl mx-auto">
-        <div className="flex flex-row items-center gap-3">
+        <Link href="/" className="flex flex-row items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -27,9 +36,31 @@ export const Header = () => {
               ที่ปรึกษาสุขภาพอัจฉริยะ
             </p>
           </div>
-        </div>
-        <div className="hidden sm:flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
+        </Link>
+        <div className="flex items-center gap-2">
+          {showNewChat && onNewChat && (
+            <button
+              onClick={onNewChat}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-sm font-medium"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              แชทใหม่
+            </button>
+          )}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-xs font-medium text-secondary-foreground">ออนไลน์</span>
           </div>
