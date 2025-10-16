@@ -2,13 +2,8 @@ import { Client, middleware } from '@line/bot-sdk';
 import { sessions, generateSessionId } from '@/lib/session';
 import crypto from 'crypto';
 
-// LINE configuration
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: '81893e02e450aeda4b4b9bcc61ee3400',
-};
-
-const client = new Client(config);
+// LINE configuration - Channel Secret is hardcoded as provided
+const CHANNEL_SECRET = '81893e02e450aeda4b4b9bcc61ee3400';
 
 // Verify LINE signature
 function verifySignature(body: string, signature: string, channelSecret: string): boolean {
@@ -62,11 +57,27 @@ async function handleChat(message: string, sessionId: string) {
 
 export async function POST(req: Request) {
   try {
+    // Get LINE configuration from environment variables at runtime
+    const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    const channelSecret = CHANNEL_SECRET;
+
+    if (!channelAccessToken) {
+      console.error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+      return Response.json({ error: 'LINE configuration error' }, { status: 500 });
+    }
+
+    // Create LINE client at runtime
+    const config = {
+      channelAccessToken,
+      channelSecret,
+    };
+    const client = new Client(config);
+
     const body = await req.text();
     const signature = req.headers.get('X-Line-Signature') || '';
 
     // Verify signature
-    if (!verifySignature(body, signature, config.channelSecret)) {
+    if (!verifySignature(body, signature, channelSecret)) {
       console.error('Invalid signature');
       return Response.json({ error: 'Invalid signature' }, { status: 401 });
     }
