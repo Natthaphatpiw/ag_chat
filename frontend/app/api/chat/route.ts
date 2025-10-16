@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const userQuestion = lastMessage.parts?.find((p) => p.type === "text")?.text || "";
 
     // Call the backend API (port 8000)
-    const backendResponse = await fetch("http://localhost:8000/api/chat", {
+    const backendResponse = await fetch("https://ag-chat-alpha.vercel.app/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

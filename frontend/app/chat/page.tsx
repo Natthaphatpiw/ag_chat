@@ -44,7 +44,7 @@ function ChatPageContent() {
   // Start new chat function
   const handleStartNewChat = async () => {
     try {
-      const response = await fetch('http://localhost:8000/session/new', {
+      const response = await fetch('https://ag-chat-alpha.vercel.app/session/new', {
         method: 'POST',
       });
 
@@ -98,7 +98,7 @@ function ChatPageContent() {
 
     try {
       // Call backend directly
-      const response = await fetch("http://localhost:8000/api/chat", {
+      const response = await fetch("https://ag-chat-alpha.vercel.app/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

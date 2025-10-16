@@ -65,10 +65,18 @@ export async function POST(req: Request) {
         console.error("Medical API error:", medicalApiResponse.status);
         const errorText = await medicalApiResponse.text();
         console.error("Medical API error body:", errorText);
-        return Response.json(
-          { error: "Failed to get response from medical API" },
-          { status: 502 }
-        );
+      return Response.json(
+        { error: "Failed to get response from medical API" },
+        {
+          status: 502,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+            "Access-Control-Allow-Credentials": "true",
+          }
+        }
+      );
       }
 
       const medicalData = await medicalApiResponse.json();
@@ -89,6 +97,13 @@ export async function POST(req: Request) {
         response: response,
         session_id: currentSessionId,
         sources: medicalData.sources || []
+      }, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+          "Access-Control-Allow-Credentials": "true",
+        }
       });
     } catch (fetchError) {
       clearTimeout(timeoutId);
@@ -106,7 +121,15 @@ export async function POST(req: Request) {
         error: "Internal server error",
         response: errorMessage,
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+          "Access-Control-Allow-Credentials": "true",
+        }
+      }
     );
   }
 }
@@ -117,8 +140,9 @@ export async function OPTIONS(req: Request) {
     status: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+      "Access-Control-Allow-Credentials": "true",
     },
   });
 }
