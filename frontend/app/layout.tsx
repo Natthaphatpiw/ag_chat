@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th">
+    <html lang="th" className="light">
       <body className={`${sarabun.variable} font-sans antialiased`}>
         {children}
         <Toaster />
